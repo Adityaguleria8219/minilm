@@ -23,3 +23,19 @@ def test_toy_merges(tmp_path):
         (b"n", b"e"),
     ]
     assert merges[:6] == expected_first_six
+
+
+def test_no_merge_across_special_token(tmp_path):
+    text = "the quick fox<|endoftext|>the quick fox"
+    input_path = tmp_path / "toy2.txt"
+    input_path.write_text(text)
+
+    vocab, merges = train_bpe(
+        input_path=str(input_path),
+        vocab_size=260,
+        special_tokens=["<|endoftext|>"],
+    )
+
+    forbidden = b"x<"
+    for token_bytes in vocab.values():
+        assert forbidden not in token_bytes, f"Found cross-boundary merge: {token_bytes}"
